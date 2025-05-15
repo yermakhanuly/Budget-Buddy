@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   Container,
@@ -10,6 +10,7 @@ import {
   Box,
   Link,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { RootState } from '../../store';
 import { register, clearError } from '../../store/slices/authSlice';
@@ -122,7 +123,7 @@ const Register: React.FC = () => {
           }}
         >
           <Typography component="h1" variant="h5">
-            Sign up
+            Create Your Account
           </Typography>
           {error && (
             <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
@@ -191,10 +192,10 @@ const Register: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing up...' : 'Sign Up'}
+              {loading ? <CircularProgress size={24} /> : 'Create Account'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
-              <Link href="/login" variant="body2">
+              <Link component={RouterLink} to="/login" variant="body2">
                 {'Already have an account? Sign in'}
               </Link>
             </Box>

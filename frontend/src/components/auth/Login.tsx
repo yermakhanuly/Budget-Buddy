@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   Container,
@@ -10,6 +10,7 @@ import {
   Box,
   Link,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { RootState } from '../../store';
 import { login, clearError } from '../../store/slices/authSlice';
@@ -99,7 +100,7 @@ const Login: React.FC = () => {
           }}
         >
           <Typography component="h1" variant="h5">
-            Sign in
+            Sign in to BudgetBuddy
           </Typography>
           {error && (
             <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
@@ -142,10 +143,10 @@ const Login: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
-              <Link href="/register" variant="body2">
+              <Link component={RouterLink} to="/register" variant="body2">
                 {"Don't have an account? Sign Up"}
               </Link>
             </Box>

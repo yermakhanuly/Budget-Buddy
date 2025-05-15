@@ -34,6 +34,32 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData: { name: string; email: string; password: string }, { rejectWithValue }) => {
     try {
+      // For local development without backend, use mock registration
+      if (process.env.NODE_ENV === 'development') {
+        // Mock successful registration (in real app, this would be API call)
+        const mockUser = {
+          _id: 'user-' + Date.now(),
+          name: userData.name,
+          email: userData.email,
+          token: 'mock-token-' + Date.now(),
+        };
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // For demo, just check that fields aren't empty
+        if (!userData.password || !userData.name || !userData.email) {
+          return rejectWithValue('All fields are required');
+        }
+        
+        // Store in localStorage to mimic real auth
+        localStorage.setItem('token', mockUser.token);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        
+        return mockUser;
+      }
+      
+      // In production, use real API
       const response = await axiosInstance.post('/auth/register', userData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data));
@@ -49,6 +75,32 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData: { email: string; password: string }, { rejectWithValue }) => {
     try {
+      // For local development without backend, use mock login
+      if (process.env.NODE_ENV === 'development') {
+        // Mock successful login (in real app, this would be API call)
+        const mockUser = {
+          _id: 'user-1',
+          name: 'Test User',
+          email: userData.email,
+          token: 'mock-token-123456',
+        };
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // For demo, just check that password isn't empty
+        if (!userData.password) {
+          return rejectWithValue('Password is required');
+        }
+        
+        // Store in localStorage to mimic real auth
+        localStorage.setItem('token', mockUser.token);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        
+        return mockUser;
+      }
+      
+      // In production, use real API
       const response = await axiosInstance.post('/auth/login', userData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data));

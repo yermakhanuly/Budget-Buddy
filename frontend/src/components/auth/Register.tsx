@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Container,
   Paper,
@@ -11,8 +11,9 @@ import {
   Link,
   Alert,
 } from '@mui/material';
-import { RootState, AppDispatch } from '../../store';
+import { RootState } from '../../store';
 import { register, clearError } from '../../store/slices/authSlice';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ const Register: React.FC = () => {
     confirmPassword: '',
   });
 
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, error, loading } = useSelector(
     (state: RootState) => state.auth

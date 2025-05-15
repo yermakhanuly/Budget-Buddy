@@ -46,27 +46,38 @@ interface TransactionState {
   error: string | null;
 }
 
+// Calculate initial balance
+const initialBalance = initialTransactions.reduce(
+  (acc, transaction) => {
+    if (transaction.type === 'income') {
+      acc.income += transaction.amount;
+    } else {
+      acc.expenses += transaction.amount;
+    }
+    return acc;
+  },
+  { balance: 0, income: 0, expenses: 0 }
+);
+initialBalance.balance = initialBalance.income - initialBalance.expenses;
+
+// Calculate initial categories
+const initialCategories: CategorySummary = {};
+initialTransactions.forEach((transaction) => {
+  if (!initialCategories[transaction.category]) {
+    initialCategories[transaction.category] = { income: 0, expenses: 0 };
+  }
+  
+  if (transaction.type === 'income') {
+    initialCategories[transaction.category].income += transaction.amount;
+  } else {
+    initialCategories[transaction.category].expenses += transaction.amount;
+  }
+});
+
 const initialState: TransactionState = {
   transactions: initialTransactions,
-  balance: {
-    balance: 4700,
-    income: 5000,
-    expenses: 300,
-  },
-  categories: {
-    Salary: {
-      income: 5000,
-      expenses: 0,
-    },
-    Food: {
-      income: 0,
-      expenses: 100,
-    },
-    Transportation: {
-      income: 0,
-      expenses: 200,
-    },
-  },
+  balance: initialBalance,
+  categories: initialCategories,
   loading: false,
   error: null,
 };
@@ -75,6 +86,7 @@ const transactionSlice = createSlice({
   name: 'transactions',
   initialState,
   reducers: {
+    // Add a new transaction
     addTransaction: (state, action: PayloadAction<Omit<Transaction, '_id' | 'createdAt' | 'updatedAt'>>) => {
       const newTransaction: Transaction = {
         ...action.payload,
@@ -82,7 +94,9 @@ const transactionSlice = createSlice({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      state.transactions.push(newTransaction);
+      
+      // Add to transactions list
+      state.transactions.unshift(newTransaction);
       
       // Update balance
       if (newTransaction.type === 'income') {
@@ -92,23 +106,28 @@ const transactionSlice = createSlice({
         state.balance.expenses += newTransaction.amount;
         state.balance.balance -= newTransaction.amount;
       }
-
+      
       // Update categories
       if (!state.categories[newTransaction.category]) {
         state.categories[newTransaction.category] = { income: 0, expenses: 0 };
       }
+      
       if (newTransaction.type === 'income') {
         state.categories[newTransaction.category].income += newTransaction.amount;
       } else {
         state.categories[newTransaction.category].expenses += newTransaction.amount;
       }
     },
+    
+    // Update an existing transaction
     updateTransaction: (state, action: PayloadAction<Transaction>) => {
-      const index = state.transactions.findIndex(t => t._id === action.payload._id);
+      const { _id } = action.payload;
+      const index = state.transactions.findIndex(t => t._id === _id);
+      
       if (index !== -1) {
         const oldTransaction = state.transactions[index];
         
-        // Revert old transaction's effect on balance and categories
+        // Revert old transaction's effect
         if (oldTransaction.type === 'income') {
           state.balance.income -= oldTransaction.amount;
           state.balance.balance -= oldTransaction.amount;
@@ -118,32 +137,40 @@ const transactionSlice = createSlice({
           state.balance.balance += oldTransaction.amount;
           state.categories[oldTransaction.category].expenses -= oldTransaction.amount;
         }
-
+        
         // Apply new transaction's effect
         if (action.payload.type === 'income') {
           state.balance.income += action.payload.amount;
           state.balance.balance += action.payload.amount;
+          
           if (!state.categories[action.payload.category]) {
             state.categories[action.payload.category] = { income: 0, expenses: 0 };
           }
+          
           state.categories[action.payload.category].income += action.payload.amount;
         } else {
           state.balance.expenses += action.payload.amount;
           state.balance.balance -= action.payload.amount;
+          
           if (!state.categories[action.payload.category]) {
             state.categories[action.payload.category] = { income: 0, expenses: 0 };
           }
+          
           state.categories[action.payload.category].expenses += action.payload.amount;
         }
-
+        
+        // Update the transaction
         state.transactions[index] = {
           ...action.payload,
           updatedAt: new Date().toISOString(),
         };
       }
     },
+    
+    // Delete a transaction
     deleteTransaction: (state, action: PayloadAction<string>) => {
       const transaction = state.transactions.find(t => t._id === action.payload);
+      
       if (transaction) {
         // Update balance
         if (transaction.type === 'income') {
@@ -156,11 +183,17 @@ const transactionSlice = createSlice({
           state.categories[transaction.category].expenses -= transaction.amount;
         }
         
+        // Remove from transactions list
         state.transactions = state.transactions.filter(t => t._id !== action.payload);
       }
+    },
+    
+    // Clear any errors
+    clearTransactionError: (state) => {
+      state.error = null;
     },
   },
 });
 
-export const { addTransaction, updateTransaction, deleteTransaction } = transactionSlice.actions;
+export const { addTransaction, updateTransaction, deleteTransaction, clearTransactionError } = transactionSlice.actions;
 export default transactionSlice.reducer; 

@@ -1,162 +1,199 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import {
+import { useNavigate } from 'react-router-dom';
+import { 
+  Box, 
+  Typography, 
+  Card, 
+  CardContent, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow,
+  Button,
   Paper,
-  Typography,
-  Box,
-  CircularProgress,
-  Alert,
+  IconButton
 } from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { RootState } from '../store';
 import { Transaction, BalanceSummary, CategorySummary } from '../types/transaction';
+import { useAppDispatch } from '../hooks/useAppDispatch';
+import { deleteTransaction } from '../store/slices/transactionSlice';
 
 const Dashboard: React.FC = () => {
-  const { transactions, balance, categories, loading, error } = useSelector(
+  const { transactions, balance, categories } = useSelector(
     (state: RootState) => state.transactions
   ) as {
     transactions: Transaction[];
     balance: BalanceSummary;
     categories: CategorySummary;
-    loading: boolean;
-    error: string | null;
+  };
+  
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
+  const recentTransactions = [...transactions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  ).slice(0, 5);
+  
+  const handleEdit = (id: string) => {
+    navigate(`/transactions/edit/${id}`);
+  };
+  
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      dispatch(deleteTransaction(id));
+    }
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom>
         Dashboard
       </Typography>
-
+      
       {/* Balance Summary */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-        <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: 140,
-              bgcolor: 'primary.main',
-              color: 'white',
-            }}
-          >
-            <Typography component="h2" variant="h6" gutterBottom>
+      <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
+        <Card sx={{ minWidth: 275, flex: 1 }}>
+          <CardContent>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
               Total Balance
             </Typography>
-            <Typography component="p" variant="h4">
-              ${balance.balance.toFixed(2)}
-            </Typography>
-          </Paper>
-        </Box>
-        <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: 140,
-              bgcolor: 'success.main',
-              color: 'white',
-            }}
-          >
-            <Typography component="h2" variant="h6" gutterBottom>
+            <Typography variant="h4">${balance.balance.toFixed(2)}</Typography>
+          </CardContent>
+        </Card>
+        <Card sx={{ minWidth: 275, flex: 1, bgcolor: 'success.light' }}>
+          <CardContent>
+            <Typography variant="h6" color="white" gutterBottom>
               Total Income
             </Typography>
-            <Typography component="p" variant="h4">
+            <Typography variant="h4" color="white">
               ${balance.income.toFixed(2)}
             </Typography>
-          </Paper>
-        </Box>
-        <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: 140,
-              bgcolor: 'error.main',
-              color: 'white',
-            }}
-          >
-            <Typography component="h2" variant="h6" gutterBottom>
+          </CardContent>
+        </Card>
+        <Card sx={{ minWidth: 275, flex: 1, bgcolor: 'error.light' }}>
+          <CardContent>
+            <Typography variant="h6" color="white" gutterBottom>
               Total Expenses
             </Typography>
-            <Typography component="p" variant="h4">
+            <Typography variant="h4" color="white">
               ${balance.expenses.toFixed(2)}
             </Typography>
-          </Paper>
+          </CardContent>
+        </Card>
+      </Box>
+      
+      {/* Top Categories */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Top Categories
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {Object.entries(categories)
+            .sort((a, b) => 
+              (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses)
+            )
+            .slice(0, 4)
+            .map(([category, amounts]) => (
+              <Card key={category} sx={{ minWidth: 200, flex: 1 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {category}
+                  </Typography>
+                  <Typography color="success.main">
+                    Income: ${amounts.income.toFixed(2)}
+                  </Typography>
+                  <Typography color="error.main">
+                    Expenses: ${amounts.expenses.toFixed(2)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
         </Box>
       </Box>
-
-      {/* Category Summary */}
-      <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-        Category Summary
-      </Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-        {Object.entries(categories).map(([category, data]) => (
-          <Box key={category} sx={{ flex: '1 1 300px', minWidth: 0 }}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                {category}
-              </Typography>
-              <Typography color="success.main">
-                Income: ${data.income.toFixed(2)}
-              </Typography>
-              <Typography color="error.main">
-                Expenses: ${data.expenses.toFixed(2)}
-              </Typography>
-            </Paper>
-          </Box>
-        ))}
-      </Box>
-
+      
       {/* Recent Transactions */}
-      <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-        Recent Transactions
-      </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {transactions.slice(0, 5).map((transaction) => (
-          <Box key={transaction._id}>
-            <Paper sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="subtitle1">{transaction.description}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {transaction.category}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography
-                    variant="subtitle1"
-                    color={transaction.type === 'income' ? 'success.main' : 'error.main'}
-                  >
-                    {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {format(new Date(transaction.date), 'MMM dd, yyyy')}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5">
+            Recent Transactions
+          </Typography>
+          <Button 
+            variant="contained" 
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/transactions/add')}
+          >
+            Add Transaction
+          </Button>
+        </Box>
+        
+        {transactions.length === 0 ? (
+          <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Typography>No transactions found. Add your first transaction!</Typography>
+          </Paper>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell align="right">Amount</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {recentTransactions.map((transaction) => (
+                  <TableRow key={transaction._id}>
+                    <TableCell>
+                      {format(new Date(transaction.date), 'MMM dd, yyyy')}
+                    </TableCell>
+                    <TableCell>{transaction.description}</TableCell>
+                    <TableCell>{transaction.category}</TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        color: transaction.type === 'income' ? 'success.main' : 'error.main',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleEdit(transaction._id)}
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDelete(transaction._id)}
+                        size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+        
+        {transactions.length > 5 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button onClick={() => navigate('/transactions')}>
+              View All Transactions
+            </Button>
           </Box>
-        ))}
+        )}
       </Box>
     </Box>
   );

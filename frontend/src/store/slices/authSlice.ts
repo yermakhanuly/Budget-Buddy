@@ -29,6 +29,18 @@ const initialState: AuthState = {
   error: null,
 };
 
+// Helper functions for mock authentication
+const getRegisteredUsers = (): any[] => {
+  const users = localStorage.getItem('registeredUsers');
+  return users ? JSON.parse(users) : [];
+};
+
+const saveRegisteredUser = (user: any) => {
+  const users = getRegisteredUsers();
+  users.push(user);
+  localStorage.setItem('registeredUsers', JSON.stringify(users));
+};
+
 // Register user
 export const registerUser = createAsyncThunk(
   'auth/register',
@@ -36,33 +48,48 @@ export const registerUser = createAsyncThunk(
     try {
       // For local development without backend, use mock registration
       if (process.env.NODE_ENV === 'development') {
-        // Mock successful registration (in real app, this would be API call)
-        const mockUser = {
-          _id: 'user-' + Date.now(),
-          name: userData.name,
-          email: userData.email,
-          token: 'mock-token-' + Date.now(),
-        };
-        
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // For demo, just check that fields aren't empty
+        // For demo, validate input
         if (!userData.password || !userData.name || !userData.email) {
           return rejectWithValue('All fields are required');
         }
         
-        // Store in localStorage to mimic real auth
-        localStorage.setItem('token', mockUser.token);
-        localStorage.setItem('user', JSON.stringify(mockUser));
+        // Check if user already exists
+        const existingUsers = getRegisteredUsers();
+        const userExists = existingUsers.some(user => user.email === userData.email);
         
-        return mockUser;
+        if (userExists) {
+          return rejectWithValue('User with this email already exists');
+        }
+        
+        // Create new user
+        const mockUser = {
+          _id: 'user-' + Date.now(),
+          name: userData.name,
+          email: userData.email,
+          password: userData.password, // In real app, this would be hashed
+          token: 'mock-token-' + Date.now(),
+        };
+        
+        // Save user to mock database
+        saveRegisteredUser(mockUser);
+        
+        // Store auth info in localStorage (excluding password)
+        const { password, ...userWithoutPassword } = mockUser;
+        localStorage.setItem('token', mockUser.token);
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+        localStorage.setItem('currentUserId', mockUser._id);
+        
+        return userWithoutPassword;
       }
       
       // In production, use real API
       const response = await axiosInstance.post('/auth/register', userData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('currentUserId', response.data._id);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Registration failed');
@@ -77,33 +104,46 @@ export const loginUser = createAsyncThunk(
     try {
       // For local development without backend, use mock login
       if (process.env.NODE_ENV === 'development') {
-        // Mock successful login (in real app, this would be API call)
-        const mockUser = {
-          _id: 'user-1',
-          name: 'Test User',
-          email: userData.email,
-          token: 'mock-token-123456',
-        };
-        
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // For demo, just check that password isn't empty
-        if (!userData.password) {
-          return rejectWithValue('Password is required');
+        // Validate input
+        if (!userData.email || !userData.password) {
+          return rejectWithValue('Email and password are required');
         }
         
-        // Store in localStorage to mimic real auth
-        localStorage.setItem('token', mockUser.token);
-        localStorage.setItem('user', JSON.stringify(mockUser));
+        // Check if user exists
+        const existingUsers = getRegisteredUsers();
+        const user = existingUsers.find(user => 
+          user.email === userData.email && user.password === userData.password
+        );
         
-        return mockUser;
+        if (!user) {
+          // Check if it's specifically an email not found or wrong password
+          const emailExists = existingUsers.some(user => user.email === userData.email);
+          if (emailExists) {
+            return rejectWithValue('Incorrect password');
+          } else {
+            return rejectWithValue('User not found. Please register first.');
+          }
+        }
+        
+        // User exists and password matches
+        const { password, ...userWithoutPassword } = user;
+        
+        // Store in localStorage
+        localStorage.setItem('token', user.token);
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+        localStorage.setItem('currentUserId', user._id);
+        
+        return userWithoutPassword;
       }
       
       // In production, use real API
       const response = await axiosInstance.post('/auth/login', userData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('currentUserId', response.data._id);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
@@ -125,14 +165,12 @@ export const getUserProfile = createAsyncThunk(
 );
 
 // Logout user
-export const logoutUser = createAsyncThunk(
-  'auth/logout', 
-  async (_, { dispatch }) => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    return null;
-  }
-);
+export const logoutUser = createAsyncThunk('auth/logout', async () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('currentUserId');
+  return null;
+});
 
 // Export aliases for components
 export const login = loginUser;

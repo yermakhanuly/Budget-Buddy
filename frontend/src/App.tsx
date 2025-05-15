@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CssBaseline } from '@mui/material';
 import Dashboard from './components/Dashboard';
@@ -9,9 +9,19 @@ import Register from './components/auth/Register';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
+import { useAppDispatch } from './hooks/useAppDispatch';
+import { loadUserTransactions } from './store/slices/transactionSlice';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
+
+  // Load user transactions when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(loadUserTransactions());
+    }
+  }, [isAuthenticated, dispatch]);
 
   return (
     <Router>

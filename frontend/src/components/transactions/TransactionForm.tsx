@@ -143,7 +143,7 @@ const TransactionForm: React.FC = () => {
         category: formData.category,
         description: formData.description,
         date: formData.date,
-        user: 'local-user',
+        user: localStorage.getItem('currentUserId') || 'guest',
       };
       
       if (id) {

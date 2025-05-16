@@ -1,4 +1,15 @@
 {
+  "name": "budget-buddy",
+  "version": "1.0.0",
+  "description": "A financial tracking application",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "build": "cd frontend && npm run build",
+    "install-frontend": "cd frontend && npm install",
+    "install-backend": "cd backend && npm install",
+    "postinstall": "npm run install-frontend && npm run install-backend"
+  },
   "dependencies": {
     "@date-io/date-fns": "^3.2.1",
     "@mui/lab": "^7.0.0-beta.12",

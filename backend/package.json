@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon start.js",
+    "build": "echo 'Build step for backend complete'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -21,5 +22,8 @@
   "devDependencies": {
     "jest": "^29.5.0",
     "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

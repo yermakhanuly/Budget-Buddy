@@ -1,13 +1,4 @@
 {
-  "name": "budget-buddy",
-  "version": "1.0.0",
-  "description": "A financial tracking application",
-  "main": "index.js",
-  "scripts": {
-    "start": "cd backend && npm start",
-    "build": "echo 'Root build script not used by Vercel'",
-    "vercel-build": "echo 'Using custom build commands in vercel.json'"
-  },
   "dependencies": {
     "@date-io/date-fns": "^3.2.1",
     "@mui/lab": "^7.0.0-beta.12",

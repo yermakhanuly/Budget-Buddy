@@ -1,7 +1,7 @@
 require('dotenv').config();
 const app = require('./src/index');
 
-const PORT = process.env.PORT || 5005;
+const port = process.env.PORT || 5005;
 
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION! Shutting down...');
@@ -9,8 +9,8 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const server = app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
 process.on('unhandledRejection', (err) => {

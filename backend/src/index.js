@@ -2,10 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
+
+
 // Connect to database
 connectDB();
 
 const app = express();
+
 
 // Body parser middleware
 app.use(express.json({ limit: '10kb' }));

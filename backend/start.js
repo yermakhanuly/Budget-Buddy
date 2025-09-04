@@ -1,7 +1,7 @@
 require('dotenv').config();
 const app = require('./src/index');
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5005;
 
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION! Shutting down...');
